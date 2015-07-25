@@ -5,20 +5,26 @@ import java.util.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by root on 7/23/15.
  */
 public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
 
-    Timer timer;
+    ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    ScheduledFuture scheduledFuture;
     URL url;
     URLPingTask urlPingTask;
     JPanel status;
     JButton startButton, stopButton;
-    public URLMonitorPanel(String url, Timer timer){
+
+    public URLMonitorPanel(String url, ScheduledThreadPoolExecutor se)
+    throws MalformedURLException{
         setLayout(new BorderLayout());
-        this.timer =timer;
+        this.scheduledThreadPoolExecutor =se;
         try {
             this.url = new URL(url);
         } catch (MalformedURLException e) {
@@ -44,7 +50,7 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
         stopButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                urlPingTask.cancel();
+               scheduledFuture.cancel(true);
                 startButton.setEnabled(true);
                 stopButton.setEnabled(false);
             }
@@ -56,7 +62,7 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
     }
     private void makeTask(){
         urlPingTask = new URLPingTask(url,this);
-       timer.schedule(urlPingTask,0L, 5000L);
+      scheduledFuture = scheduledThreadPoolExecutor.scheduleAtFixedRate( urlPingTask, 0L, 5L, TimeUnit.SECONDS);
     }
     @Override
     public void isAlive(final boolean b) {

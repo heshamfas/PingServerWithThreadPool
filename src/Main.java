@@ -6,6 +6,7 @@ import java.awt.event.WindowListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class Main {
 
@@ -15,9 +16,10 @@ public class Main {
         JFrame jFrame = new JFrame("URL Monitor");
         Container c = jFrame.getContentPane();
         c.setLayout(new BoxLayout(c,BoxLayout.Y_AXIS));
-        Timer timer = new Timer();
+     /*   Timer timer = new Timer();*/
+        ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(args.length + 1 / 2);
         for (int i = 0; i< args.length; i++){
-             c.add(new URLMonitorPanel(args[i],timer));
+             c.add(new URLMonitorPanel(args[i],scheduledThreadPoolExecutor));
                     }
         jFrame.addWindowListener(new WindowAdapter() {
             @Override
