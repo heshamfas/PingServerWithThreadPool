@@ -24,14 +24,16 @@ public class URLPingTask extends TimerTask{
     }
     @Override
     public void run() {
-        if(System.currentTimeMillis()-scheduledExecutionTime() > 5000){
+        if(false/*System.currentTimeMillis()-scheduledExecutionTime() > 5000*/){
             //let the next task do it
+            System.out.println("cannot run");
             return;
         }
         try {
+            System.out.println("calling httpURLConnection :" + Thread.currentThread().getName());
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setConnectTimeout(1000);
-            httpURLConnection.setReadTimeout(1000);
+            httpURLConnection.setConnectTimeout(10000);
+            httpURLConnection.setReadTimeout(10000);
             int code = httpURLConnection.getResponseCode();
             if(updater != null){
                 updater.isAlive(true);

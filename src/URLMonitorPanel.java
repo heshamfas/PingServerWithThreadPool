@@ -5,15 +5,15 @@ import java.util.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by root on 7/23/15.
  */
 public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
 
+     Future<Integer> futureTaskResult;
+    static volatile boolean done = false;
     ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
     ScheduledFuture scheduledFuture;
     URL url;
@@ -21,12 +21,14 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
     JPanel status;
     JButton startButton, stopButton;
 
-    public URLMonitorPanel(String url, ScheduledThreadPoolExecutor se)
+    public URLMonitorPanel(String url, ScheduledThreadPoolExecutor se,Future<Integer> future)
     throws MalformedURLException{
         setLayout(new BorderLayout());
+        this.futureTaskResult = future;
         this.scheduledThreadPoolExecutor =se;
         try {
             this.url = new URL(url);
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -61,17 +63,42 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
         makeTask();
     }
     private void makeTask(){
+        System.out.println("makeTask");
         urlPingTask = new URLPingTask(url,this);
-      scheduledFuture = scheduledThreadPoolExecutor.scheduleAtFixedRate( urlPingTask, 0L, 5L, TimeUnit.SECONDS);
+        scheduledFuture = scheduledThreadPoolExecutor.scheduleAtFixedRate( urlPingTask, 0L, 5L, TimeUnit.SECONDS);
     }
     @Override
     public void isAlive(final boolean b) {
-    SwingUtilities.invokeLater(new Runnable() {
-    @Override
-    public void run() {
-        status.setBackground(b? Color.GREEN:Color.RED);
-        status.repaint();
-    }
+
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                   // checkLicense();
+                    if(done){
+                        scheduledFuture.cancel(true);
+                        startButton.setEnabled(false);
+                        stopButton.setEnabled(false);
+                        return;
+                    }
+                }
             });
+        }catch (Exception ex){}
+    }
+
+    private void checkLicense(){
+        if(done) return;
+        try
+        {
+            Integer i = futureTaskResult.get(1000L, TimeUnit.MILLISECONDS);
+            //if we got a result, we know that the license has expired
+            JOptionPane.showMessageDialog(null, "Evaluation time period has expired", "Expired",JOptionPane.INFORMATION_MESSAGE);
+            done = true;
+        }catch (InterruptedException interruptedEx){
+             } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
     }
 }
