@@ -41,8 +41,9 @@ public class URLPingTask extends TimerTask{
         } catch (IOException e) {
             if(updater !=null){
                 updater.isAlive(false);
+                System.out.println("io exception url could not be found:" + Thread.currentThread().getName());
             }
-            e.printStackTrace();
+
         }
     }
 }

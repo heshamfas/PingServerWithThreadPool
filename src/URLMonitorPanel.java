@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.net.MalformedURLException;
-import java.util.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
@@ -12,7 +11,7 @@ import java.util.concurrent.*;
  */
 public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
 
-     Future<Integer> futureTaskResult;
+     Future<Integer> futureTimeOutTaskResult;
     static volatile boolean done = false;
     ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
     ScheduledFuture scheduledFuture;
@@ -24,7 +23,7 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
     public URLMonitorPanel(String url, ScheduledThreadPoolExecutor se,Future<Integer> future)
     throws MalformedURLException{
         setLayout(new BorderLayout());
-        this.futureTaskResult = future;
+        this.futureTimeOutTaskResult = future;
         this.scheduledThreadPoolExecutor =se;
         try {
             this.url = new URL(url);
@@ -70,17 +69,20 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
     @Override
     public void isAlive(final boolean b) {
 
+        System.out.println("is Alive :" + b);
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                   // checkLicense();
+                    checkLicense();
                     if(done){
                         scheduledFuture.cancel(true);
                         startButton.setEnabled(false);
                         stopButton.setEnabled(false);
                         return;
                     }
+                    status.setBackground(b? Color.GREEN:Color.RED);
+                    status.repaint();
                 }
             });
         }catch (Exception ex){}
@@ -90,15 +92,16 @@ public class URLMonitorPanel extends JPanel implements URLPingTask.URLUpdate {
         if(done) return;
         try
         {
-            Integer i = futureTaskResult.get(1000L, TimeUnit.MILLISECONDS);
+            Integer i = futureTimeOutTaskResult.get(0L, TimeUnit.MILLISECONDS);
             //if we got a result, we know that the license has expired
             JOptionPane.showMessageDialog(null, "Evaluation time period has expired", "Expired",JOptionPane.INFORMATION_MESSAGE);
             done = true;
+            System.out.println("License has been checked: Expired");
         }catch (InterruptedException interruptedEx){
              } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
-            e.printStackTrace();
+
         }
     }
 }
